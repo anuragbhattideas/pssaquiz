@@ -25,7 +25,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">PSSA Helper</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -47,10 +47,19 @@
 
     <!-- Quiz Page -->
     <div id="quiz" class="container hidden mt-5">
+        <h2 class="text-center fw-bold">PSSA Study Time!</h2>
+        <hr>
+        
+        <!-- Grade Selection Tabs -->
+        <ul class="nav nav-tabs mb-4" id="gradeTabs">
+            <li class="nav-item"><a class="nav-link active" onclick="loadQuestions('3rd')">3rd Grade</a></li>
+            <li class="nav-item"><a class="nav-link" onclick="loadQuestions('4th')">4th Grade</a></li>
+            <li class="nav-item"><a class="nav-link" onclick="loadQuestions('5th')">5th Grade</a></li>
+            <li class="nav-item"><a class="nav-link" onclick="loadQuestions('6th')">6th Grade</a></li>
+        </ul>
+
         <div class="card quiz-card p-4">
-            <h2 class="text-center fw-bold">PSSA Study Time!</h2>
-            <hr>
-            <h4 id="question" class="mt-3 fw-semibold"></h4>
+            <h4 id="question" class="fw-semibold"></h4>
             <div id="options" class="mt-3"></div>
             <button class="btn btn-warning mt-3" onclick="showHint()">Hint</button>
             <button class="btn btn-success mt-3" onclick="showAnswer()">Show Answer</button>
@@ -73,12 +82,18 @@
     <script>
         let quizData = [];
         let currentQuestionIndex = 0;
+        
+        // Define separate Google Sheets CSV URLs for each grade
+        const gradeSheets = {
+            "3rd": "YOUR_GOOGLE_SHEET_CSV_URL_3RD",
+            "4th": "YOUR_GOOGLE_SHEET_CSV_URL_4TH",
+            "5th": "YOUR_GOOGLE_SHEET_CSV_URL_5TH",
+            "6th": "YOUR_GOOGLE_SHEET_CSV_URL_6TH"
+        };
 
-        // Load quiz questions from Google Sheets (replace with your published CSV URL)
-        const sheetURL = "Questions.csv - Sheet1.csv";
-
-        async function loadQuestions() {
-            const response = await fetch(sheetURL);
+        // Load quiz questions for the selected grade
+        async function loadQuestions(grade) {
+            const response = await fetch(gradeSheets[grade]);
             const text = await response.text();
             const rows = text.split("\n").slice(1); // Remove header
 
@@ -92,7 +107,12 @@
                 };
             });
 
+            currentQuestionIndex = 0;
             loadQuestion();
+
+            // Update active tab
+            document.querySelectorAll("#gradeTabs .nav-link").forEach(tab => tab.classList.remove("active"));
+            document.querySelector(`#gradeTabs .nav-link:nth-child(${Object.keys(gradeSheets).indexOf(grade) + 1})`).classList.add("active");
         }
 
         function loadQuestion() {
@@ -135,11 +155,12 @@
             document.getElementById(page).classList.remove("hidden");
 
             if (page === "quiz") {
-                loadQuestions();
+                loadQuestions("3rd");
             }
         }
 
-        loadQuestions();
+        // Load 3rd grade quiz by default
+        showPage('home');
     </script>
 
 </body>
