@@ -13,14 +13,14 @@
         body { background-color: #f8f9fa; }
         .hidden { display: none; }
         .navbar { box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }
-        .container { max-width: 700px; }
         .quiz-card { box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); padding: 20px; border-radius: 10px; }
         .btn-option { width: 100%; margin-bottom: 10px; }
+        .nav-pills .nav-link.active { background-color: #007bff; color: white; }
     </style>
 </head>
 <body>
 
-    <!-- Grade Selection Modal (Shows on First Visit) -->
+    <!-- Grade Selection Modal (First Time Users) -->
     <div id="gradeSelectionModal" class="modal fade" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content p-4">
@@ -40,38 +40,20 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">PSSA Helper</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('home')">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('quiz')">Quiz</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('about')">About</a></li>
-                </ul>
-            </div>
         </div>
     </nav>
 
     <!-- Quiz Page -->
-    <div id="quiz" class="container hidden mt-5">
+    <div id="quiz" class="container mt-5">
         <h2 class="text-center fw-bold">PSSA Study Time!</h2>
         <hr>
 
-        <!-- Grade Selection Tabs -->
+        <!-- Grade Tabs -->
         <ul class="nav nav-pills justify-content-center mb-4" id="gradeTabs">
-            <li class="nav-item">
-                <a class="nav-link" onclick="loadQuestions('3rd')">3rd Grade</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" onclick="loadQuestions('4th')">4th Grade</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" onclick="loadQuestions('5th')">5th Grade</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" onclick="loadQuestions('6th')">6th Grade</a>
-            </li>
+            <li class="nav-item"><a class="nav-link" id="tab-3rd" href="#" onclick="loadQuestions('3rd')">3rd Grade</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-4th" href="#" onclick="loadQuestions('4th')">4th Grade</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-5th" href="#" onclick="loadQuestions('5th')">5th Grade</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-6th" href="#" onclick="loadQuestions('6th')">6th Grade</a></li>
         </ul>
 
         <div class="card quiz-card">
@@ -95,7 +77,7 @@
         const gradeSheets = {
             "3rd": "YOUR_GOOGLE_SHEET_CSV_URL_3RD",
             "4th": "YOUR_GOOGLE_SHEET_CSV_URL_4TH",
-            "5th": "Questioins.csv - Sheet1.csv",
+            "5th": "Questions.csv - Sheet1.csv",
             "6th": "YOUR_GOOGLE_SHEET_CSV_URL_6TH"
         };
 
@@ -118,13 +100,17 @@
         function setUserGrade(grade) {
             setCookie("preferredGrade", grade, 30);
             loadQuestions(grade);
-            new bootstrap.Modal(document.getElementById("gradeSelectionModal")).hide();
+            var modal = bootstrap.Modal.getInstance(document.getElementById("gradeSelectionModal"));
+            modal.hide();
         }
 
         async function loadQuestions(grade) {
+            document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove("active"));
+            document.getElementById("tab-" + grade).classList.add("active");
+
             const response = await fetch(gradeSheets[grade]);
             const text = await response.text();
-            const rows = text.split("\n").slice(1);
+            const rows = text.trim().split("\n").slice(1);
 
             quizData = rows.map(row => {
                 const columns = row.split(",");
@@ -141,6 +127,8 @@
         }
 
         function loadQuestion() {
+            if (quizData.length === 0) return;
+
             const q = quizData[currentQuestionIndex];
             document.getElementById("question").innerText = q.question;
             document.getElementById("options").innerHTML = q.options.map(option =>
