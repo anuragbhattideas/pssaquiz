@@ -11,7 +11,6 @@
     <style>
         body { background-color: #f8f9fa; }
         .hidden { display: none; }
-        .navbar { box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); }
         .quiz-card { box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); padding: 20px; border-radius: 10px; }
         .btn-option { width: 100%; margin-bottom: 10px; }
         .nav-pills .nav-link.active { background-color: #007bff; color: white; }
@@ -19,31 +18,20 @@
 </head>
 <body>
 
-    <!-- Grade Selection Modal -->
-    <div id="gradeSelectionModal" class="modal fade" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content p-4">
-                <h4 class="text-center fw-bold">Select Your Grade</h4>
-                <p class="text-center">We will remember your choice for future visits.</p>
-                <div class="text-center">
-                    <button class="btn btn-primary m-2" onclick="setUserGrade('3rd')">3rd Grade</button>
-                    <button class="btn btn-primary m-2" onclick="setUserGrade('4th')">4th Grade</button>
-                    <button class="btn btn-primary m-2" onclick="setUserGrade('5th')">5th Grade</button>
-                    <button class="btn btn-primary m-2" onclick="setUserGrade('6th')">6th Grade</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
             <a class="navbar-brand fw-bold" href="#">PSSA Helper</a>
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('home')">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('quiz')">Quiz</a></li>
-                <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('about')">About</a></li>
-            </ul>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('home'); closeMenu()">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('quiz'); closeMenu()">Quiz</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showPage('about'); closeMenu()">About</a></li>
+                </ul>
+            </div>
         </div>
     </nav>
 
@@ -56,24 +44,36 @@
     <!-- Quiz Page -->
     <div id="quiz" class="container mt-5 hidden">
         <h2 class="text-center fw-bold">PSSA Study Time!</h2>
-        <hr>
 
-        <!-- Grade Tabs -->
-        <ul class="nav nav-pills justify-content-center mb-4" id="gradeTabs">
-            <li class="nav-item"><a class="nav-link" id="tab-3rd" href="#" onclick="loadQuestions('3rd')">3rd Grade</a></li>
-            <li class="nav-item"><a class="nav-link" id="tab-4th" href="#" onclick="loadQuestions('4th')">4th Grade</a></li>
-            <li class="nav-item"><a class="nav-link" id="tab-5th" href="#" onclick="loadQuestions('5th')">5th Grade</a></li>
-            <li class="nav-item"><a class="nav-link" id="tab-6th" href="#" onclick="loadQuestions('6th')">6th Grade</a></li>
+        <!-- Grade Selection -->
+        <div id="grade-selection" class="text-center mt-4">
+            <p>Select your grade to get started:</p>
+            <select id="grade-select" class="form-select w-50 mx-auto" onchange="saveGrade()">
+                <option value="">Select Grade</option>
+                <option value="grade3">3rd Grade</option>
+                <option value="grade4">4th Grade</option>
+                <option value="grade5">5th Grade</option>
+                <option value="grade6">6th Grade</option>
+            </select>
+        </div>
+
+        <!-- Tabs for Grades -->
+        <ul class="nav nav-pills mt-4 justify-content-center" id="quiz-tabs">
+            <li class="nav-item"><a class="nav-link" id="tab-grade3" href="#" onclick="loadQuiz('grade3')">3rd Grade</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-grade4" href="#" onclick="loadQuiz('grade4')">4th Grade</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-grade5" href="#" onclick="loadQuiz('grade5')">5th Grade</a></li>
+            <li class="nav-item"><a class="nav-link" id="tab-grade6" href="#" onclick="loadQuiz('grade6')">6th Grade</a></li>
         </ul>
 
-        <div class="card quiz-card">
-            <h4 id="question" class="fw-semibold"></h4>
+        <!-- Quiz Questions -->
+        <div id="quiz-container" class="quiz-card mt-4 hidden">
+            <h3 id="question" class="fw-bold"></h3>
             <div id="options" class="mt-3"></div>
             <button class="btn btn-warning mt-3" onclick="showHint()">Hint</button>
             <button class="btn btn-success mt-3" onclick="showAnswer()">Show Answer</button>
-            <p id="hint" class="hidden mt-3 text-muted"></p>
-            <p id="answer" class="hidden mt-3 fw-bold"></p>
-            <button class="btn btn-dark mt-4" onclick="nextQuestion()">Next Question</button>
+            <p id="hint" class="hidden mt-2 text-secondary"></p>
+            <p id="answer" class="hidden mt-2 fw-bold"></p>
+            <button class="btn btn-dark mt-3" onclick="nextQuestion()">Next Question</button>
         </div>
     </div>
 
@@ -89,12 +89,11 @@
     <script>
         let quizData = [];
         let currentQuestionIndex = 0;
-
-        const gradeSheets = {
-            "3rd": "YOUR_GOOGLE_SHEET_CSV_URL_3RD",
-            "4th": "YOUR_GOOGLE_SHEET_CSV_URL_4TH",
-            "5th": "Questions.csv - Sheet1.csv",
-            "6th": "YOUR_GOOGLE_SHEET_CSV_URL_6TH"
+        const sheetURLs = {
+            "grade3": "Grade3.csv",
+            "grade4": "Grade4.csv",
+            "grade5": "Questions.csv - Sheet1.csv",
+            "grade6": "Grade6.csv"
         };
 
         function showPage(page) {
@@ -103,43 +102,38 @@
             document.getElementById("about").classList.add("hidden");
             document.getElementById(page).classList.remove("hidden");
 
-            if (page === "quiz") {
-                let grade = getCookie("preferredGrade");
-                if (grade) loadQuestions(grade);
+            if (page === "quiz") checkSavedGrade();
+        }
+
+        function closeMenu() {
+            let navbarToggler = document.querySelector(".navbar-toggler");
+            let navbarCollapse = document.querySelector(".navbar-collapse");
+            if (navbarCollapse.classList.contains("show")) {
+                navbarToggler.click();
             }
         }
 
-        function getCookie(name) {
-            const value = "; " + document.cookie;
-            const parts = value.split("; " + name + "=");
-            if (parts.length === 2) return parts.pop().split(";").shift();
-        }
-
-        function setCookie(name, value, days) {
-            let expires = "";
-            if (days) {
-                let date = new Date();
-                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-                expires = "; expires=" + date.toUTCString();
+        function saveGrade() {
+            let grade = document.getElementById("grade-select").value;
+            if (grade) {
+                document.cookie = `selectedGrade=${grade};path=/`;
+                loadQuiz(grade);
             }
-            document.cookie = name + "=" + value + expires + "; path=/";
         }
 
-        function setUserGrade(grade) {
-            setCookie("preferredGrade", grade, 30);
-            loadQuestions(grade);
-            var modal = bootstrap.Modal.getInstance(document.getElementById("gradeSelectionModal"));
-            modal.hide();
+        function checkSavedGrade() {
+            let cookies = document.cookie.split("; ");
+            let selectedGrade = cookies.find(row => row.startsWith("selectedGrade="))?.split("=")[1];
+            if (selectedGrade) {
+                document.getElementById("grade-select").value = selectedGrade;
+                loadQuiz(selectedGrade);
+            }
         }
 
-        async function loadQuestions(grade) {
-            document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove("active"));
-            document.getElementById("tab-" + grade).classList.add("active");
-
-            const response = await fetch(gradeSheets[grade]);
+        async function loadQuiz(grade) {
+            const response = await fetch(sheetURLs[grade]);
             const text = await response.text();
-            const rows = text.trim().split("\n").slice(1);
-
+            const rows = text.split("\n").slice(1);
             quizData = rows.map(row => {
                 const columns = row.split(",");
                 return {
@@ -150,22 +144,41 @@
                 };
             });
 
-            currentQuestionIndex = 0;
+            document.getElementById("quiz-container").classList.remove("hidden");
+            document.querySelectorAll(".nav-link").forEach(tab => tab.classList.remove("active"));
+            document.getElementById(`tab-${grade}`).classList.add("active");
+
             loadQuestion();
         }
 
         function loadQuestion() {
-            const q = quizData[currentQuestionIndex];
+            let q = quizData[currentQuestionIndex];
             document.getElementById("question").innerText = q.question;
             document.getElementById("options").innerHTML = q.options.map(option =>
-                `<button class="btn btn-outline-primary btn-option" onclick="checkAnswer('${option}')">${option}</button>`
+                `<button class="btn btn-primary btn-option" onclick="checkAnswer('${option}')">${option}</button>`
             ).join('');
+            document.getElementById("hint").classList.add("hidden");
+            document.getElementById("answer").classList.add("hidden");
         }
 
-        window.onload = function () {
-            let grade = getCookie("preferredGrade");
-            if (!grade) new bootstrap.Modal(document.getElementById("gradeSelectionModal")).show();
-        };
+        function checkAnswer(selected) {
+            alert(selected === quizData[currentQuestionIndex].answer.trim() ? "✅ Correct!" : "❌ Wrong! Try again.");
+        }
+
+        function showHint() {
+            document.getElementById("hint").innerText = quizData[currentQuestionIndex].hint;
+            document.getElementById("hint").classList.remove("hidden");
+        }
+
+        function showAnswer() {
+            document.getElementById("answer").innerText = "Answer: " + quizData[currentQuestionIndex].answer;
+            document.getElementById("answer").classList.remove("hidden");
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex = (currentQuestionIndex + 1) % quizData.length;
+            loadQuestion();
+        }
     </script>
 
 </body>
